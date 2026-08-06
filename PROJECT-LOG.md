@@ -22,3 +22,14 @@ Running log of what was built, decided, and changed each day. Kept so a new AI c
 - Generated: `ARCHITECTURE.md`, `SCHEMA.md`, `API.md`, `UI-WIREFRAMES.md`, `PROJECT-STRUCTURE.md`.
 
 **Handoff to Day 3:** Follow the Implementation Blueprint's Day 3 section exactly — build the static UI in `index.html`/`style.css` using the wireframes and color palette defined today. No new design decisions needed.
+
+## Day 3 — Project Setup & Foundation
+- Installed Live Server VS Code extension (only new tool needed — no framework CLI/package manager required for vanilla JS).
+- Built the full static UI in `index.html` and `style.css` per Day 2's wireframes and color palette: header, input section, empty state, 3 result cards with dummy content, history panel with 2 sample entries.
+- Verified Hello World checkpoint: zero console errors, confirmed responsive at both desktop and 375px mobile widths, history panel correctly stacks on mobile.
+- Confirmed trunk-based Git workflow (direct commits to `main`) as the right fit for a solo 10-day capstone.
+- Committed and pushed: "Day 3: build full static UI (input, results, quiz, history panel) - responsive layout verified"
+- Reconciled generic Day 3 checklist items (routing/auth/DB/package manager) against our actual architecture — all correctly N/A per Day 2 decisions.
+- Generated: `SETUP.md`, `ENVIRONMENT.md`, updated `PROJECT-STRUCTURE.md`, `DAY3-SUMMARY.md`.
+
+**Handoff to Day 4:** Full HTML/CSS structure is built and verified. Attach JavaScript directly to existing element `id`s — no markup changes needed. Build mock data flow per `SCHEMA.md`'s data shape, then quiz interactivity using the already-existing `.selected`/`.correct`/`.incorrect` CSS classes.
