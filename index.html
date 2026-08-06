@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyBuddy AI</title>
+
+  <!-- Google Fonts: Poppins for headings, per Day 2 design decisions -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="app-header">
+    <h1 class="logo">StudyBuddy AI</h1>
+    <button id="historyToggle" class="btn btn-ghost" aria-label="Toggle history panel">
+      ☰ History
+    </button>
+  </header>
+
+  <div class="app-shell">
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main-content">
+
+      <!-- INPUT SECTION -->
+      <section id="input-section" class="card">
+        <label for="userInput" class="section-label">Paste your text</label>
+        <textarea
+          id="userInput"
+          placeholder="Paste your notes, article, or chapter here..."
+          rows="8"
+        ></textarea>
+
+        <div class="input-footer">
+          <span id="charCount" class="char-count">0 / 6000 characters</span>
+          <button id="generateBtn" class="btn btn-primary" disabled>
+            Generate ⚡
+          </button>
+        </div>
+      </section>
+
+      <!-- LOADING STATE (hidden by default) -->
+      <div id="loadingState" class="loading-state" hidden>
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Generating your summary...</p>
+      </div>
+
+      <!-- RESULTS SECTION -->
+      <section id="results-section">
+
+        <!-- Empty state placeholder shown before first generation -->
+        <div id="emptyState" class="empty-state">
+          <p>Your summary, key points, and quiz will appear here.</p>
+        </div>
+
+        <!-- Summary card (dummy content for Day 3 preview) -->
+        <div id="summaryCard" class="card result-card" hidden>
+          <h2 class="section-label">Summary</h2>
+          <p id="summaryText">
+            This chapter explains the water cycle: evaporation turns liquid water into
+            vapor, condensation forms clouds as vapor cools, and precipitation returns
+            water to Earth's surface, driving the planet's climate system.
+          </p>
+        </div>
+
+        <!-- Key takeaways card -->
+        <div id="keyPointsCard" class="card result-card" hidden>
+          <h2 class="section-label">Key Takeaways</h2>
+          <ul id="keyPointsList" class="key-points-list">
+            <li>Evaporation turns liquid water into vapor using solar energy</li>
+            <li>Condensation forms clouds as vapor cools</li>
+            <li>Precipitation returns water to the earth's surface</li>
+            <li>The cycle is continuous and drives Earth's climate system</li>
+          </ul>
+        </div>
+
+        <!-- Quiz card -->
+        <div id="quizCard" class="card result-card" hidden>
+          <h2 class="section-label">Quiz</h2>
+
+          <div class="quiz-question">
+            <p class="quiz-question-text">What process forms clouds?</p>
+            <div class="quiz-options">
+              <button class="quiz-option" data-index="0">Evaporation</button>
+              <button class="quiz-option" data-index="1">Condensation</button>
+              <button class="quiz-option" data-index="2">Precipitation</button>
+              <button class="quiz-option" data-index="3">Erosion</button>
+            </div>
+          </div>
+
+          <button id="showAnswersBtn" class="btn btn-secondary">Show Answers</button>
+        </div>
+
+      </section>
+    </main>
+
+    <!-- ===== HISTORY PANEL (slide-out) ===== -->
+    <aside id="historyPanel" class="history-panel">
+      <div class="history-header">
+        <h2 class="section-label">History</h2>
+        <button id="clearHistoryBtn" class="btn btn-ghost btn-small">Clear All</button>
+      </div>
+
+      <ul id="historyList" class="history-list">
+        <!-- Dummy placeholder items for Day 3 preview -->
+        <li class="history-item">
+          <div class="history-item-info">
+            <span class="history-item-title">Water cycle chapter</span>
+            <span class="history-item-date">Aug 6, 2026</span>
+          </div>
+          <button class="btn-icon" aria-label="Delete this entry">🗑</button>
+        </li>
+        <li class="history-item">
+          <div class="history-item-info">
+            <span class="history-item-title">Chapter 3 notes</span>
+            <span class="history-item-date">Aug 5, 2026</span>
+          </div>
+          <button class="btn-icon" aria-label="Delete this entry">🗑</button>
+        </li>
+      </ul>
+    </aside>
+
+  </div>
+
+  <!-- script.js: intentionally minimal today.
+       Day 4 adds all interactivity (DOM logic + mock data flow) per the Blueprint. -->
+  <script src="script.js" defer></script>
+</body>
+</html>
