@@ -27,6 +27,11 @@
   --transition: all 0.2s ease;
 }
 
+/* Guarantee the hidden attribute always wins, regardless of other display rules */
+[hidden] {
+  display: none !important;
+}
+
 /* ---- Reset ---- */
 * {
   box-sizing: border-box;
