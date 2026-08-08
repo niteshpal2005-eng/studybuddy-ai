@@ -33,3 +33,21 @@ Running log of what was built, decided, and changed each day. Kept so a new AI c
 - Generated: `SETUP.md`, `ENVIRONMENT.md`, updated `PROJECT-STRUCTURE.md`, `DAY3-SUMMARY.md`.
 
 **Handoff to Day 4:** Full HTML/CSS structure is built and verified. Attach JavaScript directly to existing element `id`s — no markup changes needed. Build mock data flow per `SCHEMA.md`'s data shape, then quiz interactivity using the already-existing `.selected`/`.correct`/`.incorrect` CSS classes.
+
+## Day 5 — Claude API Integration → Swapped to Google Gemini API
+- **Deliberate architecture change (approved before implementation):** switched AI provider from Anthropic Claude API to Google Gemini API. Reason: Gemini's free tier requires no credit card and never expires, while Anthropic's free trial requires phone verification, may require a card, and expires after a short window. For a zero-budget student capstone, this was the lower-risk choice. Confirmed via live web search before deciding. Full reasoning documented in updated `ARCHITECTURE.md`.
+- Created a Google AI Studio account and generated a free-tier Gemini API key.
+- **Security incident, handled correctly:** an API key was briefly visible in a shared screenshot during setup. Rotated immediately (old key deleted, new key generated) before writing any code — no exposure in committed code or the live app.
+- Set up `.env` (local key storage) and `.gitignore` (excludes `.env` from Git), verified via `git status` before committing.
+- Built `api/summarize.js` — the serverless function that validates input, builds a structured JSON prompt, and calls the Gemini API.
+- Installed Node.js (already present) and the Vercel CLI; authenticated via GitHub login.
+- **Debugged a real issue:** initial model name (`gemini-2.5-flash`) returned 404 for this account. Diagnosed via direct `ListModels` API query rather than guesswork, found the correct available model (`gemini-3.5-flash`), fixed with a one-line change.
+- **Debugged a real Git issue:** resolved a leftover unfinished merge from Day 4 before continuing (`git commit -m "Merge remote changes"`).
+- **Debugged a real Vercel config issue:** `vercel dev` initially guessed the wrong project type ("Vite"), causing a failed dev command. Fixed by adding `vercel.json` with explicit `"framework": null`.
+- Updated `script.js` to call the real `/api/summarize` endpoint (replacing Day 4's mock `setTimeout`), including error display for failed requests.
+- Verified end-to-end with real, varied input text — confirmed responses are freshly generated (not cached/mocked), quiz interactivity and answer-reveal work correctly with real data.
+- Verified error handling by deliberately breaking the API key temporarily, confirmed a friendly error message displays (no crash, no blank screen), then restored the correct key and re-verified success.
+- Minor Vercel project naming mismatch occurred (linked as "studyflow" instead of "studybuddy-ai") — cosmetic only, no functional impact, can be renamed anytime in Vercel dashboard settings.
+- Generated: updated `ARCHITECTURE.md`, `API.md`, `ENVIRONMENT.md`.
+
+**Handoff to Day 6:** Core AI integration is fully working and tested locally via `vercel dev`. Day 6 adds the LocalStorage history feature (save/reopen/delete sessions) and performs the first production deployment. When deploying, remember: (1) set `GEMINI_API_KEY` in Vercel's dashboard environment variables — it only exists locally right now, (2) the Vercel project is named "studyflow" not "studybuddy-ai" — rename in Settings if desired, purely cosmetic, (3) `vercel.json` with `"framework": null` must stay in the repo for deployment to work correctly, same reason as local dev.

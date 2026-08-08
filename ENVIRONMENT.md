@@ -1,35 +1,45 @@
 # ENVIRONMENT.md — StudyBuddy AI
 
-**Status:** Finalized Day 3 · No environment variables are active yet — this documents what exists today and what's coming.
+**Status:** Updated Day 5 — environment variables are now active.
 
-## Current State (Day 3)
+## Active Environment Variables
 
-No environment variables, secrets, or `.env` files exist yet. The project runs entirely client-side with no server-side code, so there is nothing to configure.
+| Variable | Purpose | Where it's set |
+|---|---|---|
+| `GEMINI_API_KEY` | Authenticates server-side calls to the Google Gemini API | Local: `.env` file (untracked by Git). Production: Vercel dashboard (to be set Day 6). |
 
-## Tools Installed
+## Tools Installed (Day 1 → Day 5)
 
 | Tool | Purpose | Installed |
 |---|---|---|
 | Git | Version control | Day 1 |
 | VS Code | Code editor | Day 1 (pre-existing) |
-| Live Server (VS Code extension) | Local dev preview with auto-refresh | Day 3 |
+| Live Server (VS Code extension) | Local preview for static files (HTML/CSS only — cannot run serverless functions) | Day 3 |
+| Node.js | Required to run the Vercel CLI | Day 5 (already present, v24.18.0) |
+| Vercel CLI (`vercel`) | Runs the serverless function locally via `vercel dev`, and will deploy to production on Day 6 | Day 5 |
 
-## Planned — Not Yet Configured
+## Local Setup Instructions
 
-| Variable / Tool | Purpose | When it's added |
-|---|---|---|
-| `ANTHROPIC_API_KEY` | Authenticates server-side calls to the Claude API | Day 5 |
-| `.env` (local) | Holds the API key locally during development, excluded from Git via `.gitignore` | Day 5 |
-| Vercel dashboard environment variable | Holds the same API key in production, set via Vercel's project settings, never committed to code | Day 6 |
-| Node.js / npm | Needed only to run the Vercel CLI locally for testing the serverless function before deploying | Day 5–6 |
-| Vercel CLI | Local testing of `api/summarize.js` before deployment | Day 5–6 |
+1. Create a free Google account if you don't have one.
+2. Go to `aistudio.google.com` → **Get API key** → **Create API key** → copy it.
+3. In the project root, create a file named `.env` (already done) with:
+   ```
+   GEMINI_API_KEY=your_actual_key_here
+   ```
+4. Confirm `.gitignore` contains `.env` (already done) so the key is never committed.
+5. Run `vercel dev` (not Live Server) to test locally — this is the only way to run `api/summarize.js`, since it needs a server, not just static file serving.
 
-## Why Nothing Is Configured Yet
+## Why Gemini Instead of Claude
 
-The architecture (finalized Day 2) deliberately has zero environment variables until the Claude API integration begins on Day 5. Introducing them earlier would mean holding secrets with nothing yet using them — unnecessary risk for zero benefit. This file will be updated on Day 5 with the actual variable names, where they're set, and how to verify they're working.
+Documented in full in `ARCHITECTURE.md` — short version: Gemini's free tier has no credit card requirement and no expiration date, while Anthropic's free trial credit requires phone verification, may require a card, and expires. For a zero-budget student capstone, this was the safer choice. This was a deliberate Day 5 architecture decision, approved before implementation began.
 
-## Security Note (for Day 5 onward)
+## Security Practices Followed
 
-- The API key will **never** be hardcoded in any `.js` file.
-- The API key will **never** be committed to Git — `.gitignore` will explicitly exclude `.env` before the key is ever created.
-- The API key will only exist in two places: your local `.env` file (untracked by Git) and the Vercel dashboard's environment variable settings (production).
+- `GEMINI_API_KEY` is never hardcoded in any `.js` file — read only via `process.env.GEMINI_API_KEY`.
+- `.env` is excluded from Git via `.gitignore`, verified via `git status` before the first commit containing it.
+- **Incident note:** during setup, an API key was briefly shown in a screenshot shared during development. It was immediately rotated (old key deleted, new key generated) before any code was written using it — no exposure occurred in committed code or the live app.
+- Production deployment (Day 6) will set `GEMINI_API_KEY` directly in Vercel's dashboard environment variables — never in code.
+
+## Local Dev Server Note
+
+`vercel dev` requires logging into a free Vercel account (via GitHub, in this project's case) the first time it runs. This is the same account used for Day 6's deployment — no separate signup needed later.
