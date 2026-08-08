@@ -1,6 +1,6 @@
 // =========================================================
 // StudyBuddy AI — script.js
-// Day 4: Mock data flow (no real API yet — that's Day 5)
+// Day 5: Real API integration (Google Gemini via serverless function)
 // =========================================================
 
 // ---- DOM element references ----
@@ -22,42 +22,6 @@ const showAnswersBtn = document.getElementById('showAnswersBtn');
 
 const MIN_CHARS = 50;
 const MAX_CHARS = 6000;
-
-// ---- Mock data (stands in for the real Claude API response until Day 5) ----
-function getMockData() {
-  return {
-    summary:
-      "This text explains the water cycle, covering evaporation, condensation, and precipitation as the three core stages that continuously move water through Earth's systems and drive the planet's climate.",
-    keyPoints: [
-      "Evaporation turns liquid water into vapor using solar energy",
-      "Condensation forms clouds as vapor cools in the atmosphere",
-      "Precipitation returns water to the earth's surface as rain or snow",
-      "The cycle is continuous and drives Earth's climate system"
-    ],
-    quiz: [
-      {
-        question: "What process forms clouds?",
-        options: ["Evaporation", "Condensation", "Precipitation", "Erosion"],
-        correctIndex: 1
-      },
-      {
-        question: "What provides the energy for evaporation?",
-        options: ["Wind", "The moon", "Solar energy", "Ocean currents"],
-        correctIndex: 2
-      },
-      {
-        question: "What does precipitation do?",
-        options: [
-          "Turns water into vapor",
-          "Forms clouds",
-          "Returns water to Earth's surface",
-          "Stops the water cycle"
-        ],
-        correctIndex: 2
-      }
-    ]
-  };
-}
 
 // ---- Live character counter + button enable/disable ----
 userInput.addEventListener('input', () => {
@@ -82,6 +46,17 @@ function hideLoading() {
   loadingState.hidden = true;
 }
 
+// ---- Error display ----
+function showError(message) {
+  // Reuse the empty state area to show errors, keeps things simple
+  emptyState.hidden = false;
+  emptyState.textContent = `⚠ ${message}`;
+}
+
+function clearError() {
+  emptyState.textContent = 'Your summary, key points, and quiz will appear here.';
+}
+
 // ---- Render functions: take data, build DOM safely (no innerHTML with raw text) ----
 function renderSummary(summary) {
   summaryText.textContent = summary;
@@ -99,7 +74,6 @@ function renderKeyPoints(points) {
 }
 
 function renderQuiz(questions) {
-  // Clear everything in the quiz card except the "Show Answers" button
   const existingQuestions = quizCard.querySelectorAll('.quiz-question');
   existingQuestions.forEach((el) => el.remove());
 
@@ -134,7 +108,6 @@ function renderQuiz(questions) {
 
 // ---- Quiz interactivity ----
 function selectAnswer(questionEl, selectedBtn) {
-  // Clear previous selection in this question only
   questionEl.querySelectorAll('.quiz-option').forEach((btn) => {
     btn.classList.remove('selected');
   });
@@ -150,7 +123,7 @@ function revealAnswers() {
 
     optionButtons.forEach((btn) => {
       const btnIndex = Number(btn.dataset.index);
-      btn.disabled = true; // lock in answers once revealed
+      btn.disabled = true;
 
       if (btnIndex === correctIndex) {
         btn.classList.add('correct');
@@ -163,14 +136,27 @@ function revealAnswers() {
 
 showAnswersBtn.addEventListener('click', revealAnswers);
 
-// ---- Main Generate flow (mock version — real API call comes Day 5) ----
-generateBtn.addEventListener('click', () => {
+// ---- Main Generate flow: REAL API call ----
+generateBtn.addEventListener('click', async () => {
+  clearError();
   showLoading();
 
-  // Simulates network delay. Day 5 replaces this setTimeout
-  // with a real fetch('/api/summarize') call.
-  setTimeout(() => {
-    const data = getMockData();
+  try {
+    const response = await fetch('/api/summarize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: userInput.value }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Server returned a structured error (400/500/502/504)
+      showError(data.error || 'Something went wrong. Please try again.');
+      hideLoading();
+      generateBtn.disabled = false;
+      return;
+    }
 
     renderSummary(data.summary);
     renderKeyPoints(data.keyPoints);
@@ -178,7 +164,12 @@ generateBtn.addEventListener('click', () => {
 
     hideLoading();
     generateBtn.disabled = false;
-  }, 1500);
+  } catch (err) {
+    console.error('Network or unexpected error:', err);
+    showError('Could not reach the server. Please check your connection and try again.');
+    hideLoading();
+    generateBtn.disabled = false;
+  }
 });
 
-console.log("StudyBuddy AI — Day 4 Milestone 2 loaded: mock generate flow active.");
+console.log("StudyBuddy AI — Day 5 loaded: real Gemini API integration active.");
