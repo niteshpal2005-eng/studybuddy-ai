@@ -27,11 +27,6 @@
   --transition: all 0.2s ease;
 }
 
-/* Guarantee the hidden attribute always wins, regardless of other display rules */
-[hidden] {
-  display: none !important;
-}
-
 /* ---- Reset ---- */
 * {
   box-sizing: border-box;
@@ -335,6 +330,21 @@ textarea:focus {
 .history-item-date {
   font-size: 11px;
   color: var(--color-text-muted);
+}
+
+.history-empty {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-sm) 0;
+}
+
+/* ---- Footer ---- */
+.app-footer {
+  text-align: center;
+  padding: var(--space-md) var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: 12px;
 }
 
 /* =========================================================
