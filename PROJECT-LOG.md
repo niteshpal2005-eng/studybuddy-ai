@@ -51,3 +51,16 @@ Running log of what was built, decided, and changed each day. Kept so a new AI c
 - Generated: updated `ARCHITECTURE.md`, `API.md`, `ENVIRONMENT.md`.
 
 **Handoff to Day 6:** Core AI integration is fully working and tested locally via `vercel dev`. Day 6 adds the LocalStorage history feature (save/reopen/delete sessions) and performs the first production deployment. When deploying, remember: (1) set `GEMINI_API_KEY` in Vercel's dashboard environment variables — it only exists locally right now, (2) the Vercel project is named "studyflow" not "studybuddy-ai" — rename in Settings if desired, purely cosmetic, (3) `vercel.json` with `"framework": null` must stay in the repo for deployment to work correctly, same reason as local dev.
+
+## Day 6 — Complete MVP: History Feature + First Production Deployment
+- Built full `localStorage` history system in `script.js`: auto-save on generate, render list with preview title + date, click-to-reopen, per-item delete, clear-all with confirmation, empty-state message.
+- Wired the History toggle button (☰) to actually show/hide the panel.
+- Added the required footer: "Built with Claude as part of the AB Talks 60-Day Claude AI Challenge."
+- **Incident discovered and fully resolved:** the Day 5 "studyflow" Vercel project link turned out to be a different, pre-existing, unrelated project (not one created for this capstone). Production deployment briefly overwrote that project's live site with StudyBuddy AI content.
+  - Root cause: `vercel dev`'s "Search all projects" prompt on Day 5 matched an old project by name coincidence, and it was selected without realizing it wasn't newly created.
+  - Fix: created a new, correctly-named `studybuddy-ai` Vercel project from scratch, set `GEMINI_API_KEY` there, redeployed successfully.
+  - Original "studyflow" project restored via Vercel's "Promote to Production" on its last good (pre-incident) deployment — fully recovered, zero data loss, confirmed working again at its original URL.
+- **Production deployment successful and verified:** live app tested end-to-end at https://studybuddy-ai-sandy.vercel.app — real Gemini API calls, history save/reopen, footer all confirmed working outside localhost.
+- Generated: updated `ENVIRONMENT.md` (documents the incident and correct URLs).
+
+**Handoff to Day 7:** MVP is complete and live. All core features (generate, quiz, history) work in production, not just locally. Day 7 is UI/UX polish only — no new features, no architecture changes. Known minor items for Day 7: error message currently reuses the empty-state element (could get its own styled element); loading spinner/results overlap seen once on Day 4/6 (root-caused and fixed, monitor for recurrence). Live URL for all future testing: https://studybuddy-ai-sandy.vercel.app

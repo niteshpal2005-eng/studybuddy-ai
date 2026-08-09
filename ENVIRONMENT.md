@@ -1,45 +1,51 @@
 # ENVIRONMENT.md — StudyBuddy AI
 
-**Status:** Updated Day 5 — environment variables are now active.
+**Status:** Updated Day 6 — now deployed to production.
 
 ## Active Environment Variables
 
 | Variable | Purpose | Where it's set |
 |---|---|---|
-| `GEMINI_API_KEY` | Authenticates server-side calls to the Google Gemini API | Local: `.env` file (untracked by Git). Production: Vercel dashboard (to be set Day 6). |
+| `GEMINI_API_KEY` | Authenticates server-side calls to the Google Gemini API | Local: `.env` file (untracked by Git). **Production: Vercel dashboard → studybuddy-ai project → Settings → Environment Variables (confirmed working Day 6).** |
 
-## Tools Installed (Day 1 → Day 5)
+## Live URLs
+
+| Environment | URL |
+|---|---|
+| **Production (live app)** | https://studybuddy-ai-sandy.vercel.app |
+| Local development | http://localhost:3000 (via `vercel dev`) |
+
+## Tools Installed (Day 1 → Day 6)
 
 | Tool | Purpose | Installed |
 |---|---|---|
 | Git | Version control | Day 1 |
 | VS Code | Code editor | Day 1 (pre-existing) |
-| Live Server (VS Code extension) | Local preview for static files (HTML/CSS only — cannot run serverless functions) | Day 3 |
-| Node.js | Required to run the Vercel CLI | Day 5 (already present, v24.18.0) |
-| Vercel CLI (`vercel`) | Runs the serverless function locally via `vercel dev`, and will deploy to production on Day 6 | Day 5 |
+| Live Server (VS Code extension) | Local preview for static files only | Day 3 |
+| Node.js | Required to run the Vercel CLI | Day 5 (already present) |
+| Vercel CLI (`vercel`) | Local dev server + production deployment | Day 5 |
+| Vercel account | Hosting provider | Day 5 (via GitHub login) |
 
-## Local Setup Instructions
+## Important Note — Vercel Project Linking (Day 6 Incident)
 
-1. Create a free Google account if you don't have one.
-2. Go to `aistudio.google.com` → **Get API key** → **Create API key** → copy it.
-3. In the project root, create a file named `.env` (already done) with:
-   ```
-   GEMINI_API_KEY=your_actual_key_here
-   ```
-4. Confirm `.gitignore` contains `.env` (already done) so the key is never committed.
-5. Run `vercel dev` (not Live Server) to test locally — this is the only way to run `api/summarize.js`, since it needs a server, not just static file serving.
+During Day 5 setup, `vercel dev`'s interactive prompts accidentally linked this project to a **different, pre-existing Vercel project** ("studyflow") instead of creating a new one. This was discovered and fully corrected on Day 6:
 
-## Why Gemini Instead of Claude
+1. The correct, dedicated `studybuddy-ai` Vercel project was created.
+2. `GEMINI_API_KEY` was set on the correct project.
+3. Production deployment was redone on the correct project.
+4. The original "studyflow" project's deployment (which had been temporarily overwritten) was rolled back to its own prior working version via Vercel's "Promote to Production" on its last good deployment.
 
-Documented in full in `ARCHITECTURE.md` — short version: Gemini's free tier has no credit card requirement and no expiration date, while Anthropic's free trial credit requires phone verification, may require a card, and expires. For a zero-budget student capstone, this was the safer choice. This was a deliberate Day 5 architecture decision, approved before implementation began.
+**Lesson for future days:** when running `vercel link` or `vercel dev` for the first time, always double-check the project name shown before confirming — don't assume "Search all projects" will only show projects created for this session.
+
+## Local Setup Instructions (unchanged from Day 5)
+
+1. `.env` in project root contains `GEMINI_API_KEY=your_key_here`.
+2. `.gitignore` excludes `.env` from Git — verified via `git status` before every commit.
+3. Run `vercel dev` (not Live Server) for local testing — Live Server cannot run the serverless function.
 
 ## Security Practices Followed
 
-- `GEMINI_API_KEY` is never hardcoded in any `.js` file — read only via `process.env.GEMINI_API_KEY`.
-- `.env` is excluded from Git via `.gitignore`, verified via `git status` before the first commit containing it.
-- **Incident note:** during setup, an API key was briefly shown in a screenshot shared during development. It was immediately rotated (old key deleted, new key generated) before any code was written using it — no exposure occurred in committed code or the live app.
-- Production deployment (Day 6) will set `GEMINI_API_KEY` directly in Vercel's dashboard environment variables — never in code.
-
-## Local Dev Server Note
-
-`vercel dev` requires logging into a free Vercel account (via GitHub, in this project's case) the first time it runs. This is the same account used for Day 6's deployment — no separate signup needed later.
+- `GEMINI_API_KEY` never hardcoded, read only via `process.env.GEMINI_API_KEY`.
+- `.env` never committed (verified repeatedly via `git status`).
+- Production key set directly in Vercel's dashboard, marked "Sensitive" (masked in the UI).
+- Earlier key exposure incident (Day 5) was handled correctly — key rotated immediately, no exposure in committed code or the live app.
