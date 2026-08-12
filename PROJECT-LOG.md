@@ -77,3 +77,15 @@ Running log of what was built, decided, and changed each day. Kept so a new AI c
 - Verified full flow working end-to-end on the live production URL: generate, quiz reveal with icons, toasts, footer — not just localhost.
 
 **Handoff to Day 8:** App is polished and stable in production. Git-to-Vercel auto-deploy is now correctly configured — future days just need `git push`, no manual `vercel --prod` required (though it's a safe fallback if auto-deploy ever seems to not trigger). Day 8 is testing and bug-fixing across browsers/devices/edge cases — no new features. Two things worth testing specifically on Day 8 given today's history: (1) confirm the `[hidden]` CSS rule survives, (2) confirm auto-deploy actually triggers on the next push before assuming it works.
+
+## Day 8 — Testing, Debugging & Production Optimization
+- Performed a full QA/security/performance review before public launch (Senior QA Engineer + Security Reviewer + Performance Engineer lens).
+- **Real bug found and fixed:** race condition where reopening a history item during an in-flight Generate request could let a stale API response silently overwrite the reopened session. Fixed with request-ID tracking (each request gets an incrementing ID; responses are discarded if a newer request has since started) plus `isGenerating` guards on history delete/clear/reopen actions.
+- Added `maxlength="6000"` to the textarea for hard client-side input capping (previously only soft-enforced via button disable).
+- Added proactive offline/online detection with toast feedback.
+- **Confirmed via direct code review** (not just testing): XSS-safe (all rendering uses `textContent`), duplicate-request-safe (button disables synchronously), `localStorage` quota-safe (20-entry cap), WCAG AA color contrast-safe.
+- **Confirmed via live `curl` test against the production API:** server-side input validation correctly rejects invalid requests even when bypassing the browser UI entirely — proved the security boundary is real, not just client-side theater.
+- Deployed and verified working on production.
+- Generated `TESTING.md` — full QA findings, manual test checklist, and honestly-documented known limitations (no rate limiting, hardcoded model name risk, no automated tests) rather than hiding them.
+
+**Handoff to Day 9:** App is stable, tested, and production-hardened. Day 9 focuses on final production polish: favicon, meta tags, README.md with live demo link. No functional changes expected — purely the "looks professional and complete" pass before Day 10's launch.
