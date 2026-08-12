@@ -63,13 +63,6 @@ body {
   }
 }
 
-
-/* Guarantee the hidden attribute always wins, regardless of other display rules
-   (regression fix from Day 4 — must survive every future CSS rewrite) */
-[hidden] {
-  display: none !important;
-}
-
 /* ---- Universal focus-visible ring (keyboard navigation) ---- */
 :focus-visible {
   outline: 3px solid var(--color-primary);
@@ -81,6 +74,12 @@ body {
    and the interaction was a mouse click, not keyboard */
 :focus:not(:focus-visible) {
   outline: none;
+}
+
+/* Guarantee the hidden attribute always wins, regardless of other
+   display rules on that element (regression fix, first caught Day 4) */
+[hidden] {
+  display: none !important;
 }
 
 /* ---- Header ---- */
@@ -484,6 +483,14 @@ textarea:focus {
   color: var(--color-text-muted);
   text-align: center;
   padding: var(--space-md) 0;
+}
+
+/* Day 8: dim + block interaction with history while a generation is
+   in flight, preventing the race condition where a stale API response
+   could overwrite a reopened history entry. */
+.history-list.history-locked {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* ---- Toast notifications (Day 7) ---- */

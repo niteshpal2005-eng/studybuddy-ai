@@ -1,9 +1,8 @@
 // =========================================================
 // StudyBuddy AI — script.js
-// Day 7: UI/UX polish — dedicated error state, toast
-// notifications, near-limit character warning, keyboard
-// accessibility for history items. Core logic (API calls,
-// history, quiz) unchanged from Day 6.
+// Day 8: Production hardening — race condition fix (stale
+// response guard), history panel locked during generation,
+// offline detection. Core features unchanged from Day 7.
 // =========================================================
 
 // ---- DOM element references ----
@@ -34,9 +33,17 @@ const toastContainer = document.getElementById('toastContainer');
 
 const MIN_CHARS = 50;
 const MAX_CHARS = 6000;
-const NEAR_LIMIT_THRESHOLD = 5800; // Day 7: warn user before hitting the hard cap
+const NEAR_LIMIT_THRESHOLD = 5800;
 const HISTORY_KEY = 'studybuddy_history';
 const MAX_HISTORY_ENTRIES = 20;
+
+// ---- Day 8: request tracking to prevent stale-response race conditions ----
+// If a user reopens a history item (or starts a new generate) while a
+// previous request is still in flight, we must ignore the old response
+// when it eventually resolves — otherwise it can silently overwrite
+// whatever the user is now looking at.
+let currentRequestId = 0;
+let isGenerating = false;
 
 // ---- Live character counter + button enable/disable ----
 userInput.addEventListener('input', () => {
@@ -45,25 +52,37 @@ userInput.addEventListener('input', () => {
   charCount.textContent = `${rawLength} / ${MAX_CHARS} characters`;
   charCount.classList.toggle('near-limit', rawLength >= NEAR_LIMIT_THRESHOLD);
 
-  if (length >= MIN_CHARS && rawLength <= MAX_CHARS) {
+  if (length >= MIN_CHARS && rawLength <= MAX_CHARS && !isGenerating) {
     generateBtn.disabled = false;
   } else {
     generateBtn.disabled = true;
   }
 });
 
+// ---- Day 8: lock/unlock interactions that could race with an in-flight request ----
+function setBusy(busy) {
+  isGenerating = busy;
+  generateBtn.disabled = busy || userInput.value.trim().length < MIN_CHARS;
+
+  // Prevent reopening/deleting history while a generation is in progress —
+  // this is what actually closes the Day 8 race-condition finding.
+  historyList.setAttribute('aria-disabled', busy ? 'true' : 'false');
+  historyList.classList.toggle('history-locked', busy);
+}
+
 // ---- Loading state helpers ----
 function showLoading() {
   loadingState.hidden = false;
   emptyState.hidden = true;
-  generateBtn.disabled = true;
+  setBusy(true);
 }
 
 function hideLoading() {
   loadingState.hidden = true;
+  setBusy(false);
 }
 
-// ---- Error display (Day 7: dedicated element, visually + semantically distinct) ----
+// ---- Error display ----
 function showError(message) {
   errorText.textContent = message;
   errorState.hidden = false;
@@ -75,18 +94,26 @@ function clearError() {
   errorText.textContent = '';
 }
 
-// ---- Toast notifications (Day 7) ----
+// ---- Toast notifications ----
 function showToast(message) {
   const toast = document.createElement('div');
   toast.className = 'toast';
   toast.textContent = message;
   toastContainer.appendChild(toast);
 
-  // Remove from DOM after the CSS animation finishes (2s total: fade in + hold + fade out)
   setTimeout(() => {
     toast.remove();
   }, 2000);
 }
+
+// ---- Day 8: offline/online detection ----
+window.addEventListener('offline', () => {
+  showToast('You are offline — check your connection');
+});
+
+window.addEventListener('online', () => {
+  showToast('Back online');
+});
 
 // ---- Render functions: take data, build DOM safely (no innerHTML with raw text) ----
 function renderSummary(summary) {
@@ -95,7 +122,7 @@ function renderSummary(summary) {
 }
 
 function renderKeyPoints(points) {
-  keyPointsList.innerHTML = ''; // clear previous render
+  keyPointsList.innerHTML = '';
   points.forEach((point) => {
     const li = document.createElement('li');
     li.textContent = point;
@@ -169,8 +196,6 @@ showAnswersBtn.addEventListener('click', revealAnswers);
 
 // =========================================================
 // ---- HISTORY FEATURE ----
-// Data shape per SCHEMA.md:
-// { id, createdAt, inputPreview, inputText, summary, keyPoints, quiz }
 // =========================================================
 
 function loadHistory() {
@@ -188,20 +213,20 @@ function saveHistory(historyArray) {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(historyArray));
   } catch (err) {
     console.error('Failed to write history to localStorage:', err);
+    showToast('Could not save — storage may be full');
   }
 }
 
 function addToHistory(entry) {
   const history = loadHistory();
   history.unshift(entry);
-
   const trimmed = history.slice(0, MAX_HISTORY_ENTRIES);
-
   saveHistory(trimmed);
   renderHistoryList();
 }
 
 function deleteHistoryEntry(id) {
+  if (isGenerating) return; // Day 8: guard against races during generation
   const history = loadHistory();
   const filtered = history.filter((entry) => entry.id !== id);
   saveHistory(filtered);
@@ -210,6 +235,7 @@ function deleteHistoryEntry(id) {
 }
 
 function clearAllHistory() {
+  if (isGenerating) return; // Day 8: guard against races during generation
   const confirmed = confirm('Clear all history? This cannot be undone.');
   if (!confirmed) return;
 
@@ -238,7 +264,7 @@ function renderHistoryList() {
   history.forEach((entry) => {
     const li = document.createElement('li');
     li.className = 'history-item';
-    li.tabIndex = 0; // Day 7: keyboard-focusable
+    li.tabIndex = 0;
     li.setAttribute('role', 'button');
     li.setAttribute('aria-label', `Reopen session: ${entry.inputPreview}`);
 
@@ -266,7 +292,6 @@ function renderHistoryList() {
     });
 
     li.addEventListener('click', () => loadEntryIntoResults(entry));
-    // Day 7: keyboard accessibility — Enter/Space also reopens the entry
     li.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -281,6 +306,17 @@ function renderHistoryList() {
 }
 
 function loadEntryIntoResults(entry) {
+  if (isGenerating) {
+    // Day 8: this is the actual fix for the race condition — reopening
+    // history is blocked while a generation is in flight, so there's
+    // no way for a stale response to land on top of a reopened entry.
+    showToast('Please wait for the current generation to finish');
+    return;
+  }
+
+  // Invalidate any previous in-flight request's ability to apply its result
+  currentRequestId++;
+
   clearError();
   userInput.value = entry.inputText;
   charCount.textContent = `${entry.inputText.length} / ${MAX_CHARS} characters`;
@@ -292,19 +328,21 @@ function loadEntryIntoResults(entry) {
 
   emptyState.hidden = true;
 
-  // Day 7: scroll results into view for a smoother reopen experience
   summaryCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 clearHistoryBtn.addEventListener('click', clearAllHistory);
 
-// ---- History panel toggle (☰ History button) ----
 historyToggle.addEventListener('click', () => {
   historyPanel.hidden = !historyPanel.hidden;
 });
 
 // ---- Main Generate flow: REAL API call + save to history ----
 generateBtn.addEventListener('click', async () => {
+  if (isGenerating) return; // Day 8: extra defensive guard, belt-and-suspenders
+
+  const requestId = ++currentRequestId;
+
   clearError();
   showLoading();
 
@@ -319,10 +357,16 @@ generateBtn.addEventListener('click', async () => {
 
     const data = await response.json();
 
+    // Day 8: if the user navigated away from this request (e.g. reopened
+    // a history item) while we were waiting, discard this response —
+    // it's stale and must not overwrite what's currently on screen.
+    if (requestId !== currentRequestId) {
+      return;
+    }
+
     if (!response.ok) {
       showError(data.error || 'Something went wrong. Please try again.');
       hideLoading();
-      generateBtn.disabled = false;
       return;
     }
 
@@ -341,18 +385,18 @@ generateBtn.addEventListener('click', async () => {
     });
 
     showToast('Saved to history');
-
     hideLoading();
-    generateBtn.disabled = false;
   } catch (err) {
+    if (requestId !== currentRequestId) {
+      return; // Day 8: stale request, ignore even the error
+    }
     console.error('Network or unexpected error:', err);
     showError('Could not reach the server. Please check your connection and try again.');
     hideLoading();
-    generateBtn.disabled = false;
   }
 });
 
 // ---- Initial page load: render any existing history ----
 renderHistoryList();
 
-console.log("StudyBuddy AI — Day 7 loaded: UI/UX polish active (toasts, error states, accessibility).");
+console.log("StudyBuddy AI — Day 8 loaded: production hardening active (race condition fix, offline detection).");
