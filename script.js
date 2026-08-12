@@ -1,7 +1,9 @@
 // =========================================================
 // StudyBuddy AI — script.js
-// Day 6: History feature (localStorage) added on top of
-// Day 5's real Gemini API integration.
+// Day 7: UI/UX polish — dedicated error state, toast
+// notifications, near-limit character warning, keyboard
+// accessibility for history items. Core logic (API calls,
+// history, quiz) unchanged from Day 6.
 // =========================================================
 
 // ---- DOM element references ----
@@ -11,6 +13,8 @@ const generateBtn = document.getElementById('generateBtn');
 
 const loadingState = document.getElementById('loadingState');
 const emptyState = document.getElementById('emptyState');
+const errorState = document.getElementById('errorState');
+const errorText = document.getElementById('errorText');
 
 const summaryCard = document.getElementById('summaryCard');
 const summaryText = document.getElementById('summaryText');
@@ -26,17 +30,22 @@ const historyPanel = document.getElementById('historyPanel');
 const historyList = document.getElementById('historyList');
 const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
+const toastContainer = document.getElementById('toastContainer');
+
 const MIN_CHARS = 50;
 const MAX_CHARS = 6000;
+const NEAR_LIMIT_THRESHOLD = 5800; // Day 7: warn user before hitting the hard cap
 const HISTORY_KEY = 'studybuddy_history';
 const MAX_HISTORY_ENTRIES = 20;
 
 // ---- Live character counter + button enable/disable ----
 userInput.addEventListener('input', () => {
   const length = userInput.value.trim().length;
-  charCount.textContent = `${userInput.value.length} / ${MAX_CHARS} characters`;
+  const rawLength = userInput.value.length;
+  charCount.textContent = `${rawLength} / ${MAX_CHARS} characters`;
+  charCount.classList.toggle('near-limit', rawLength >= NEAR_LIMIT_THRESHOLD);
 
-  if (length >= MIN_CHARS && userInput.value.length <= MAX_CHARS) {
+  if (length >= MIN_CHARS && rawLength <= MAX_CHARS) {
     generateBtn.disabled = false;
   } else {
     generateBtn.disabled = true;
@@ -54,14 +63,29 @@ function hideLoading() {
   loadingState.hidden = true;
 }
 
-// ---- Error display ----
+// ---- Error display (Day 7: dedicated element, visually + semantically distinct) ----
 function showError(message) {
-  emptyState.hidden = false;
-  emptyState.textContent = `⚠ ${message}`;
+  errorText.textContent = message;
+  errorState.hidden = false;
+  emptyState.hidden = true;
 }
 
 function clearError() {
-  emptyState.textContent = 'Your summary, key points, and quiz will appear here.';
+  errorState.hidden = true;
+  errorText.textContent = '';
+}
+
+// ---- Toast notifications (Day 7) ----
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  toastContainer.appendChild(toast);
+
+  // Remove from DOM after the CSS animation finishes (2s total: fade in + hold + fade out)
+  setTimeout(() => {
+    toast.remove();
+  }, 2000);
 }
 
 // ---- Render functions: take data, build DOM safely (no innerHTML with raw text) ----
@@ -144,7 +168,7 @@ function revealAnswers() {
 showAnswersBtn.addEventListener('click', revealAnswers);
 
 // =========================================================
-// ---- HISTORY FEATURE (Day 6) ----
+// ---- HISTORY FEATURE ----
 // Data shape per SCHEMA.md:
 // { id, createdAt, inputPreview, inputText, summary, keyPoints, quiz }
 // =========================================================
@@ -169,9 +193,8 @@ function saveHistory(historyArray) {
 
 function addToHistory(entry) {
   const history = loadHistory();
-  history.unshift(entry); // newest first
+  history.unshift(entry);
 
-  // Cap at MAX_HISTORY_ENTRIES — drop oldest if exceeded
   const trimmed = history.slice(0, MAX_HISTORY_ENTRIES);
 
   saveHistory(trimmed);
@@ -183,6 +206,7 @@ function deleteHistoryEntry(id) {
   const filtered = history.filter((entry) => entry.id !== id);
   saveHistory(filtered);
   renderHistoryList();
+  showToast('Deleted from history');
 }
 
 function clearAllHistory() {
@@ -191,6 +215,7 @@ function clearAllHistory() {
 
   localStorage.removeItem(HISTORY_KEY);
   renderHistoryList();
+  showToast('History cleared');
 }
 
 function formatHistoryDate(isoString) {
@@ -200,7 +225,7 @@ function formatHistoryDate(isoString) {
 
 function renderHistoryList() {
   const history = loadHistory();
-  historyList.innerHTML = ''; // clear previous render
+  historyList.innerHTML = '';
 
   if (history.length === 0) {
     const emptyLi = document.createElement('li');
@@ -213,6 +238,9 @@ function renderHistoryList() {
   history.forEach((entry) => {
     const li = document.createElement('li');
     li.className = 'history-item';
+    li.tabIndex = 0; // Day 7: keyboard-focusable
+    li.setAttribute('role', 'button');
+    li.setAttribute('aria-label', `Reopen session: ${entry.inputPreview}`);
 
     const infoDiv = document.createElement('div');
     infoDiv.className = 'history-item-info';
@@ -230,15 +258,21 @@ function renderHistoryList() {
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn-icon';
-    deleteBtn.setAttribute('aria-label', 'Delete this entry');
+    deleteBtn.setAttribute('aria-label', `Delete session: ${entry.inputPreview}`);
     deleteBtn.textContent = '🗑';
     deleteBtn.addEventListener('click', (e) => {
-      e.stopPropagation(); // don't trigger the li's click (reopen) when deleting
+      e.stopPropagation();
       deleteHistoryEntry(entry.id);
     });
 
-    // Clicking anywhere on the item (except delete) reopens that session
     li.addEventListener('click', () => loadEntryIntoResults(entry));
+    // Day 7: keyboard accessibility — Enter/Space also reopens the entry
+    li.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        loadEntryIntoResults(entry);
+      }
+    });
 
     li.appendChild(infoDiv);
     li.appendChild(deleteBtn);
@@ -257,6 +291,9 @@ function loadEntryIntoResults(entry) {
   renderQuiz(entry.quiz);
 
   emptyState.hidden = true;
+
+  // Day 7: scroll results into view for a smoother reopen experience
+  summaryCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 clearHistoryBtn.addEventListener('click', clearAllHistory);
@@ -293,7 +330,6 @@ generateBtn.addEventListener('click', async () => {
     renderKeyPoints(data.keyPoints);
     renderQuiz(data.quiz);
 
-    // Save this successful generation to history
     addToHistory({
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
@@ -303,6 +339,8 @@ generateBtn.addEventListener('click', async () => {
       keyPoints: data.keyPoints,
       quiz: data.quiz,
     });
+
+    showToast('Saved to history');
 
     hideLoading();
     generateBtn.disabled = false;
@@ -317,4 +355,4 @@ generateBtn.addEventListener('click', async () => {
 // ---- Initial page load: render any existing history ----
 renderHistoryList();
 
-console.log("StudyBuddy AI — Day 6 loaded: history feature active.");
+console.log("StudyBuddy AI — Day 7 loaded: UI/UX polish active (toasts, error states, accessibility).");

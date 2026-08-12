@@ -44,7 +44,7 @@
       </section>
 
       <!-- LOADING STATE (hidden by default) -->
-      <div id="loadingState" class="loading-state" hidden>
+      <div id="loadingState" class="loading-state" hidden aria-live="polite">
         <div class="spinner" aria-hidden="true"></div>
         <p>Generating your summary...</p>
       </div>
@@ -54,7 +54,14 @@
 
         <!-- Empty state placeholder shown before first generation -->
         <div id="emptyState" class="empty-state">
+          <span class="empty-state-icon" aria-hidden="true">📄</span>
           <p>Your summary, key points, and quiz will appear here.</p>
+        </div>
+
+        <!-- Error state (Day 7: separate from empty state, announced to screen readers) -->
+        <div id="errorState" class="error-state" role="alert" aria-live="assertive" hidden>
+          <span class="error-state-icon" aria-hidden="true">⚠</span>
+          <p id="errorText"></p>
         </div>
 
         <!-- Summary card (dummy content for Day 3 preview) -->
@@ -117,8 +124,11 @@
     <p>Built with Claude as part of the AB Talks 60-Day Claude AI Challenge.</p>
   </footer>
 
-  <!-- script.js: Day 6 adds the history feature on top of Day 5's
-       real Gemini API integration. -->
+  <!-- Toast notifications (Day 7) -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- script.js: Day 7 adds polish (toasts, error state wiring).
+       Core logic unchanged from Day 6. -->
   <script src="script.js" defer></script>
 </body>
 </html>

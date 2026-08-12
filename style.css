@@ -1,18 +1,22 @@
 /* =========================================================
    StudyBuddy AI — style.css
-   Built Day 3. Color palette & fonts decided Day 2.
+   Day 7: UI/UX polish — transitions, accessibility, error
+   states, toasts, micro-interactions. No layout redesign.
    ========================================================= */
 
-/* ---- Configuration: CSS custom properties (our "settings") ---- */
+/* ---- Configuration: CSS custom properties ---- */
 :root {
-  --color-primary: #2C5F2D;      /* forest green — focus/study feel */
-  --color-secondary: #97BC62;    /* moss green */
-  --color-bg: #F5F5F5;           /* soft cream background */
-  --color-surface: #FFFFFF;      /* card backgrounds */
+  --color-primary: #2C5F2D;
+  --color-primary-dark: #1E4720;
+  --color-secondary: #97BC62;
+  --color-bg: #F5F5F5;
+  --color-surface: #FFFFFF;
   --color-text: #1A1A1A;
   --color-text-muted: #6B6B6B;
   --color-border: #E0E0E0;
   --color-danger: #C0392B;
+  --color-danger-bg: #FBEAE8;
+  --color-success-bg: #EAF4E9;
 
   --font-heading: 'Poppins', system-ui, sans-serif;
   --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -21,10 +25,14 @@
   --space-sm: 16px;
   --space-md: 24px;
   --space-lg: 32px;
+  --space-xl: 48px;
 
   --radius: 10px;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --transition: all 0.2s ease;
+  --radius-sm: 6px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.12);
+  --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ---- Reset ---- */
@@ -34,11 +42,45 @@
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-body);
   background: var(--color-bg);
   color: var(--color-text);
-  line-height: 1.5;
+  line-height: 1.6;
+}
+
+/* ---- Respect reduced-motion preference (accessibility) ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* Guarantee the hidden attribute always wins, regardless of other display rules
+   (regression fix from Day 4 — must survive every future CSS rewrite) */
+[hidden] {
+  display: none !important;
+}
+
+/* ---- Universal focus-visible ring (keyboard navigation) ---- */
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Remove the default focus ring only when focus-visible is supported
+   and the interaction was a mouse click, not keyboard */
+:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* ---- Header ---- */
@@ -49,12 +91,14 @@ body {
   padding: var(--space-sm) var(--space-md);
   background: var(--color-primary);
   color: white;
+  box-shadow: var(--shadow-sm);
 }
 
 .logo {
   font-family: var(--font-heading);
   font-size: 22px;
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 /* ---- Layout shell ---- */
@@ -79,9 +123,13 @@ body {
 .card {
   background: var(--color-surface);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-sm);
   padding: var(--space-md);
-  transition: var(--transition);
+  transition: box-shadow var(--transition);
+}
+
+.card:hover {
+  box-shadow: var(--shadow);
 }
 
 .section-label {
@@ -91,6 +139,7 @@ body {
   color: var(--color-primary);
   margin-bottom: var(--space-sm);
   display: block;
+  letter-spacing: -0.01em;
 }
 
 /* ---- Buttons (shared component) ---- */
@@ -102,7 +151,11 @@ body {
   border-radius: 8px;
   padding: 10px 18px;
   cursor: pointer;
-  transition: var(--transition);
+  transition: background-color var(--transition), transform 100ms ease, box-shadow var(--transition);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .btn-primary {
@@ -110,7 +163,8 @@ body {
   color: white;
 }
 .btn-primary:hover:not(:disabled) {
-  background: #244d25;
+  background: var(--color-primary-dark);
+  box-shadow: var(--shadow-sm);
 }
 .btn-primary:disabled {
   background: #B7C9B8;
@@ -122,8 +176,12 @@ body {
   color: var(--color-text);
   margin-top: var(--space-sm);
 }
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   filter: brightness(0.95);
+}
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-ghost {
@@ -136,7 +194,10 @@ body {
   color: var(--color-text);
 }
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.04);
+}
+.app-header .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .btn-small {
@@ -150,9 +211,17 @@ body {
   cursor: pointer;
   font-size: 16px;
   padding: 4px;
+  border-radius: 6px;
+  transition: background-color var(--transition), transform 100ms ease;
+}
+.btn-icon:hover {
+  background: var(--color-danger-bg);
+}
+.btn-icon:active {
+  transform: scale(0.9);
 }
 
-/* Minimum tap target size for accessibility (44px) — full polish pass Day 7 */
+/* Minimum tap target size for accessibility (44px) */
 .btn, .btn-icon {
   min-height: 40px;
 }
@@ -166,10 +235,13 @@ textarea {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   resize: vertical;
+  transition: border-color var(--transition);
+}
+textarea:hover {
+  border-color: #C5C5C5;
 }
 textarea:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  border-color: var(--color-primary);
 }
 
 .input-footer {
@@ -182,6 +254,12 @@ textarea:focus {
 .char-count {
   font-size: 13px;
   color: var(--color-text-muted);
+  transition: color var(--transition);
+}
+
+.char-count.near-limit {
+  color: var(--color-danger);
+  font-weight: 600;
 }
 
 /* ---- Loading state ---- */
@@ -192,6 +270,7 @@ textarea:focus {
   gap: var(--space-sm);
   padding: var(--space-lg);
   color: var(--color-text-muted);
+  animation: fadeIn 200ms ease;
 }
 
 .spinner {
@@ -207,6 +286,16 @@ textarea:focus {
   to { transform: rotate(360deg); }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ---- Empty state ---- */
 .empty-state {
   text-align: center;
@@ -215,7 +304,38 @@ textarea:focus {
   font-size: 14px;
 }
 
+.empty-state-icon {
+  font-size: 28px;
+  display: block;
+  margin-bottom: var(--space-xs);
+  opacity: 0.6;
+}
+
+/* ---- Error state (Day 7: now visually distinct from empty state) ---- */
+.error-state {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  background: var(--color-danger-bg);
+  border: 1px solid #E8B4AE;
+  border-radius: var(--radius);
+  padding: var(--space-sm) var(--space-md);
+  color: #7A2A22;
+  font-size: 14px;
+  animation: fadeInUp 220ms ease;
+}
+
+.error-state-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
 /* ---- Results cards ---- */
+.result-card {
+  animation: fadeInUp 280ms ease;
+}
+
 .result-card + .result-card {
   margin-top: var(--space-md);
 }
@@ -240,6 +360,14 @@ textarea:focus {
 }
 
 /* ---- Quiz ---- */
+.quiz-question {
+  animation: fadeInUp 240ms ease;
+}
+
+.quiz-question + .quiz-question {
+  margin-top: var(--space-md);
+}
+
 .quiz-question-text {
   font-weight: 600;
   margin-bottom: var(--space-sm);
@@ -255,27 +383,40 @@ textarea:focus {
   font-family: var(--font-body);
   font-size: 13px;
   padding: 10px 12px;
-  border: 1px solid var(--color-border);
+  border: 1.5px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-surface);
   cursor: pointer;
   text-align: left;
-  transition: var(--transition);
+  transition: border-color var(--transition), background-color var(--transition), transform 100ms ease;
 }
-.quiz-option:hover {
+.quiz-option:hover:not(:disabled) {
   border-color: var(--color-secondary);
+}
+.quiz-option:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.quiz-option:disabled {
+  cursor: default;
 }
 .quiz-option.selected {
   border-color: var(--color-primary);
-  background: #EAF2E9;
+  background: var(--color-success-bg);
 }
 .quiz-option.correct {
   border-color: var(--color-primary);
-  background: #D9EAD8;
+  background: var(--color-success-bg);
+  font-weight: 600;
+}
+.quiz-option.correct::before {
+  content: "✓ ";
 }
 .quiz-option.incorrect {
   border-color: var(--color-danger);
-  background: #F8E2E0;
+  background: var(--color-danger-bg);
+}
+.quiz-option.incorrect::before {
+  content: "✗ ";
 }
 
 /* ---- History panel ---- */
@@ -284,8 +425,9 @@ textarea:focus {
   flex-shrink: 0;
   background: var(--color-surface);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-sm);
   padding: var(--space-md);
+  animation: fadeInUp 220ms ease;
 }
 
 .history-header {
@@ -310,21 +452,26 @@ textarea:focus {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   cursor: pointer;
-  transition: var(--transition);
+  transition: border-color var(--transition), background-color var(--transition);
 }
 .history-item:hover {
   border-color: var(--color-secondary);
+  background: #FAFBF8;
 }
 
 .history-item-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .history-item-title {
   font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .history-item-date {
@@ -336,7 +483,40 @@ textarea:focus {
   font-size: 13px;
   color: var(--color-text-muted);
   text-align: center;
-  padding: var(--space-sm) 0;
+  padding: var(--space-md) 0;
+}
+
+/* ---- Toast notifications (Day 7) ---- */
+.toast-container {
+  position: fixed;
+  bottom: var(--space-md);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--color-text);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  box-shadow: var(--shadow-lg);
+  animation: toastIn 220ms ease, toastOut 220ms ease 1.8s forwards;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 /* ---- Footer ---- */
@@ -349,7 +529,7 @@ textarea:focus {
 
 /* =========================================================
    Responsive: below 600px, history panel stacks below main
-   content instead of sitting beside it (Day 2 decision).
+   content instead of sitting beside it.
    ========================================================= */
 @media (max-width: 600px) {
   .app-shell {
@@ -370,5 +550,11 @@ textarea:focus {
 
   .logo {
     font-size: 18px;
+  }
+
+  .toast-container {
+    width: calc(100% - var(--space-md) * 2);
+    left: var(--space-md);
+    transform: none;
   }
 }
