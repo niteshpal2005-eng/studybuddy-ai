@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Page Not Found — StudyBuddy AI</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <meta name="theme-color" content="#2C5F2D" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .not-found-wrap {
+      min-height: 70vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: var(--space-lg);
+    }
+    .not-found-code {
+      font-family: var(--font-heading);
+      font-size: 72px;
+      font-weight: 700;
+      color: var(--color-primary);
+      line-height: 1;
+    }
+    .not-found-message {
+      font-size: 16px;
+      color: var(--color-text-muted);
+      margin: var(--space-sm) 0 var(--space-md);
+      max-width: 360px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <h1 class="logo">StudyBuddy AI</h1>
+  </header>
+
+  <div class="not-found-wrap">
+    <div class="not-found-code">404</div>
+    <p class="not-found-message">This page doesn't exist. Let's get you back to summarizing.</p>
+    <a href="/" class="btn btn-primary">Back to StudyBuddy AI</a>
+  </div>
+
+  <footer class="app-footer">
+    <p>Built with Claude as part of the AB Talks 60-Day Claude AI Challenge.</p>
+  </footer>
+
+</body>
+</html>
