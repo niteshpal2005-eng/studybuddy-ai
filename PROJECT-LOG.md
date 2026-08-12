@@ -64,3 +64,16 @@ Running log of what was built, decided, and changed each day. Kept so a new AI c
 - Generated: updated `ENVIRONMENT.md` (documents the incident and correct URLs).
 
 **Handoff to Day 7:** MVP is complete and live. All core features (generate, quiz, history) work in production, not just locally. Day 7 is UI/UX polish only — no new features, no architecture changes. Known minor items for Day 7: error message currently reuses the empty-state element (could get its own styled element); loading spinner/results overlap seen once on Day 4/6 (root-caused and fixed, monitor for recurrence). Live URL for all future testing: https://studybuddy-ai-sandy.vercel.app
+
+## Day 7 — UI/UX Polish
+- Design system refinement: consistent spacing scale, refined shadows, `:focus-visible` keyboard rings, `prefers-reduced-motion` support.
+- Separated error state from empty state: dedicated element with icon, `role="alert"`, `aria-live="assertive"` for screen reader announcement — resolves the item flagged since Day 5.
+- Added fade-in transitions for result cards, quiz questions, and history panel — no more instant "snap" appearance.
+- Added toast notification system: confirms "Saved to history," "Deleted from history," "History cleared."
+- **Accessibility improvements:** quiz correct/incorrect answers now show ✓/✗ icons in addition to color (colorblind-safe — genuine WCAG-relevant fix, not just decoration). History items are now keyboard-focusable and operable via Enter/Space, with descriptive `aria-label`s. Loading state has `aria-live="polite"`.
+- Added near-limit character count warning (turns red/bold approaching the 6000 char cap).
+- **Bug found and fixed:** the Day 7 CSS rewrite accidentally dropped the `[hidden] { display: none !important; }` rule from Day 4, causing loading/error/empty states to all show simultaneously again. Caught via careful testing, fixed immediately, documented here so future CSS rewrites don't drop it again.
+- **Deployment issue found and fixed:** discovered Vercel's Git connection from Day 6 never actually completed (silently failed) — pushes weren't auto-deploying. Diagnosed via mismatched deployment timestamps, fixed by properly connecting via Vercel's GitHub App permissions (had to add repo access first, since only "studyflow" was authorized). Manual `vercel --prod` used as an immediate stopgap while fixing the underlying connection.
+- Verified full flow working end-to-end on the live production URL: generate, quiz reveal with icons, toasts, footer — not just localhost.
+
+**Handoff to Day 8:** App is polished and stable in production. Git-to-Vercel auto-deploy is now correctly configured — future days just need `git push`, no manual `vercel --prod` required (though it's a safe fallback if auto-deploy ever seems to not trigger). Day 8 is testing and bug-fixing across browsers/devices/edge cases — no new features. Two things worth testing specifically on Day 8 given today's history: (1) confirm the `[hidden]` CSS rule survives, (2) confirm auto-deploy actually triggers on the next push before assuming it works.
